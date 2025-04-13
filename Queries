@@ -1,0 +1,258 @@
+1. Find all topics and tasks which are taught in October 2020:
+
+db.topics.find({ date: { $gt: '2020-10-01', $lt: '2020-10-31' } })
+Ans: {
+    _id: ObjectId('67fbaff10461c3f17e08ac89'),
+        topic_id: 1,
+            name: 'JavaScript',
+                date: '2020-10-05'
+} {
+    _id: ObjectId('67fbaff10461c3f17e08ac89'),
+        topic_id: 1,
+            name: 'JavaScript',
+                date: '2020-10-05'
+}
+
+db.tasks.aggregate([
+    {
+        $lookup: {
+            from: "topics",
+            localField: "topic_id",
+            foreignField: "topic_id",
+            as: "topic_details"
+        }
+    },
+    {
+        $match: {
+            "topic_details.date": {
+                $gte: "2020-10-01",
+                $lte: "2020-10-31"
+            }
+        }
+
+    }])
+
+Ans:
+{
+    _id: ObjectId('67fbb0210461c3f17e08ac8c'),
+        user_id: 1,
+        topic_id: 1,
+        submitted: true,
+        topic_details: [
+            {
+                _id: ObjectId('67fbaff10461c3f17e08ac89'),
+                topic_id: 1,
+                name: 'JavaScript',
+                date: '2020-10-05'
+            }
+        ]
+}
+
+{
+    _id: ObjectId('67fbb0210461c3f17e08ac8d'),
+        user_id: 2,
+        topic_id: 2,
+        submitted: false,
+        topic_details: [
+            {
+                _id: ObjectId('67fbaff10461c3f17e08ac8a'),
+                topic_id: 2,
+                name: 'MongoDB',
+                date: '2020-10-20'
+            }
+            ]
+}
+
+{
+    _id: ObjectId('67fbb0210461c3f17e08ac8e'),
+        user_id: 3,
+        topic_id: 2,
+        submitted: false,
+        topic_details: [
+            {
+                _id: ObjectId('67fbaff10461c3f17e08ac8a'),
+                topic_id: 2,
+                name: 'MongoDB',
+                date: '2020-10-20'
+            }
+        ]
+}
+
+
+
+
+2. Find all company drives between 15 - Oct - 2020 and 31 - Oct - 2020
+db.company_drives.find({
+    date: {
+        $gte: "2020-10-15",
+        $lte: "2020-10-31"
+    }
+})
+Ans:
+{
+    _id: ObjectId('67fbb0300461c3f17e08ac8f'),
+    company: 'TCS',
+    date: '2020-10-20',
+    students_attended: [
+        1,
+        2
+    ]
+}
+{
+    _id: ObjectId('67fbb0300461c3f17e08ac90'),
+    company: 'Wipro',
+    date: '2020-10-28',
+        students_attended: [
+            3
+        ]
+}
+
+
+
+
+3. Find all company drives and students who appeared for placement
+db.company_drives.aggregate([
+    {
+        $project: {
+            company: 1,
+            students_attended: 1
+        }
+    }
+])
+
+Ans :
+
+{
+    _id: ObjectId('67fbb0300461c3f17e08ac8f'),
+    company: 'TCS',
+    students_attended: [
+        1,
+        2
+            ]
+}
+
+{
+    _id: ObjectId('67fbb0300461c3f17e08ac90'),
+    company: 'Wipro',
+    students_attended: [
+        3
+    ]
+}
+
+{
+    _id: ObjectId('67fbb0300461c3f17e08ac91'),
+    company: 'Infosys',
+    students_attended: [
+        2,
+        3
+    ]
+}
+
+
+4. Find the number of problems solved by each user in codekata
+db.codekata.aggregate([
+    {
+        $lookup: {
+            from: "users",
+            localField: "user_id",
+            foreignField: "_id",
+            as: "user_details"
+        }
+    },
+    {
+        $project: {
+            user: { $arrayElemAt: ["$user_details.name", 0] },
+            problems_solved: 1
+        }
+    }
+])
+
+Ans : 
+{
+    _id: ObjectId('67fbafa80461c3f17e08ac83'),
+    problems_solved: 75,
+    user: 'Arun'
+}
+
+{
+    _id: ObjectId('67fbafa80461c3f17e08ac84'),
+    problems_solved: 60,
+    user: 'Divya'
+}
+
+{
+    _id: ObjectId('67fbafa80461c3f17e08ac85'),
+    problems_solved: 100,
+    user: 'Kishore'
+}
+
+
+5. Find mentors who have mentees count more than 15
+db.mentors.find({
+    $expr: {
+        $gt: [{ $size: "$mentees" }, 15]
+    }
+})
+Ans : 
+{
+    _id: ObjectId('67fbb03d0461c3f17e08ac93'),
+    mentor_id: 102,
+    name: 'Jane',
+    mentees: [
+        2,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18
+    ]
+}
+
+
+6. Find number of users who are absent and did not submit tasks between 15 - Oct - 2020 and 31 - Oct - 2020
+
+db.attendance.aggregate([
+    {
+        $match: {
+            present: false,
+            date: {
+                $gte: "2020-10-15",
+                $lte: "2020-10-31"
+            }
+        }
+    },
+    {
+        $lookup: {
+            from: "tasks",
+            localField: "user_id",
+            foreignField: "user_id",
+            as: "task_data"
+        }
+    },
+    {
+        $unwind: "$task_data"
+    },
+    {
+        $match: {
+            "task_data.submitted": false
+        }
+    },
+    {
+        $count: "absent_and_not_submitted"
+    }
+])
+
+Ans : 
+{
+    absent_and_not_submitted: 1
+}
