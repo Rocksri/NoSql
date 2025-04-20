@@ -1,0 +1,150 @@
+DELETE
+db.flightsdata.deleteMany({checked: 'OY'})
+db.check.deleteMany({ "history.disease": 'cold' })
+
+
+
+UPDATE'S
+db.flightsdata.updateOne({check : 'Yes'}, {$set: {checked : 'OY'}})
+db.flightsdata.updateMany({}, {$set: {checked : 'OY'}})
+db.flightsdata.updateMany({}, {$set: {status: {desp: "on-time", lastUpated: '1 min before' }}})
+db.flightsdata.updateMany({}, {$set: {"status.details": {oy : 'ess'}}})
+db.flightsdata.updateOne({ name: 'Scott Tolib' }, {$set: { hobbies: ["Cricket", "Cooking"] }})
+db.flightsdata.updateOne({ name: 'Freddy Melver' }, {$set: { history: [{ disease: "cold" }] }})
+db.check.updateOne({age:73}, {$set: {city: "OnePiece"}})
+db.users.updateOne({ name: 'Manuel' }, { $inc: {age: 2}, $set: {isSporty: false} })
+db.users.updateOne({ name: "Chris" }, { $min: {age: 1} })
+db.users.updateOne({ name: "Chris" }, { $max: {age: 30} })
+db.users.updateOne({ name: "Chris" }, { $mul: {age: 1.4} })
+db.users.updateMany({isStory: false}, { $unset: {isStory: "" }})        #remove the field
+db.users.updateMany({}, { $rename: {age: "Age" }})          #RENAME THE FIELD
+db.users.updateOne({ name: 'Maria' }, { $set: {age: 29, hobbies: [{ title: 'Good', frequency: 3 }]}}, {upsert: true})           #upsert will add data even data not found
+db.users.updateMany({hobbies: { $elemMatch: {title: "Sports", frequency: {$gte: 2}}}}, {$set: {"hobbies.$.highFrequency": true }})
+
+
+
+
+
+
+
+FIND'S
+db.flightsdata.findOne({ name: "Max" })
+db.flightsdata.find().toArray()
+db.flightsdata.find().forEach((flightdta) => {printjson(flightdta)})
+db.flightsdata.find({}, {name: 1, _id: 0} )			#projection return required key's only
+db.flightsdata.find({ hobbies:'Cricket' })
+db.flightsdata.findOne({ name: 'Scott Tolib'}).hobbies
+db.flightsdata.find({ "status.details.oy": "ess"})
+db.check.find({ age:{$gt: 23 }})
+db.Tvshow.findOne({ runtime: {$lt: 60} })       #lessthan
+db.Tvshow.findOne({ runtime: {$lte: 60} })      #lessthan_or_equal
+db.Tvshow.findOne({ runtime: {$ne: 60} })       #notequal
+db.Tvshow.findOne({ runtime: {$gt: 60} })       #greaterthan
+db.Tvshow.findOne({ runtime: {$gte: 60} })       #greaterthan_or_equal
+db.Tvshow.findOne({ "rating.average": { $gt: 7 } })         #rating.average >>embedded fields paths use DOT's to move on
+db.Tvshow.findOne({ "rating.average": { $gt: 7 }, genres: 'Drama' })
+db.Tvshow.findOne({ "rating.average": { $gt: 7 }, genres: ['Drama'] })      #return only has Drama
+db.Tvshow.find({ runtime: {$in: [ 30, 40 ]}})       #NORMAL "in" function
+db.Tvshow.find({ runtime: {$nin: [ 30, 40 ]}})       #NORMAL "notin" function
+db.Tvshow.find({ $or: [{ "rating.average": { $lt: 5 }}, {"rating.average": { $gt: 9.3 }} ] })           #NORMAL "or" function
+db.Tvshow.find({ $nor: [{ "rating.average": { $lt: 5 }}, {"rating.average": { $gt: 9.3 }} ] })          #NORMAL "nor" function
+db.Tvshow.find({ $and: [{ "rating.average": {$gt: 9 }}, {genres: 'Drama'}]})            #NORMAL "and" function
+db.Tvshow.find({ "rating.average": {$gt: 9 }, genres: 'Drama'})            #NORMAL "and" function
+db.Tvshow.find( { genres: 'Drama', genres: 'Horror' } ).count()         #23
+db.Tvshow.find({ $and:[ { genres: 'Drama'}, {genres: 'Horror' }]} ).count()     #17
+db.Tvshow.find({ runtime: {$not: {$eq: 60} } }).count()
+db.hobbies.find({ ff: {$exists: true} })        #that field should exists
+db.hobbies.find({ ff: {$exists: false} })       #that field should not exists
+db.hobbies.find({ ph: {$type: "int" } })        #NORMAL "type" of fields
+db.hobbies.find({ ph: {$type: ["int", "string" ] } })
+db.Tvshow.find({ summary: { $regex:  /small/  }})
+db.monthlyBudget.find({ $expr: {$gt: ["$spent", "$budget"]} })          #compare two int's
+db.monthlyBudget.find({ $expr: {$gt: [{ $cond: {if: { $gte: ["$spent", 250]}, then: { $subtract: ['$spent',50]}, else: "$spent" }}, "$budget"]}})
+db.companyData.find({ city: {$size: 3} })       #exact match of field size like 3
+db.Tvshow.find({ genres: {$all: ["Thriller", "Drama"]} }).count()
+db.Tvshow.find().sort({ "rating.average": 1, runtime: -1}).skip(10).limit(10)
+db.Tvshow.find({genres: "Drama"}, { _id: 1, "genres.$": { $elemMatch: {$eq: 'Horror'}}})
+db.Tvshow.find({"rating.average": {$gt: 8}}, {genres: {$slice: 2}, name: 1})
+db.Tvshow.find({"rating.average": {$gt: 8}}, {genres: {$slice: [-1,5] }, name: 1})
+db.users.find({hobbies: { $elemMatch: {title: "Sports", frequency: {$gt: 2}}}})
+
+
+
+INSERT'S
+db.check.insertMany([{ name : "Iris", age : 23, city: "Chennai", history : {disease : ['cold', 'fever']}},
+{ name : "Grap", age : 73, city: "Chennai", history : {disease : ['Frezzy', 'Haki']}},
+{ name : "Luffy", age : 23, city: "Chennai", history : {disease : ['Rubber', 'Cut']}}])
+db.hobbies.insertMany([{_id: 'check', name: 'check'}, {_id: 'y', name:'y'}], {ordered: false})   >> will insert data id ordered is false
+db.persons.insertOne({name: 'Sri', age: 22}, { writeConcern: {w: 1, j: false, wtiemout: 200}})
+
+
+db.companyData.insertMany([{ _id:1, name : "Iris", age : 23, city: "Chennai"},
+{ _id:4, name : "Grap", age : 73, city: "Chennai"},
+{ _id:5, name : "Luffy", age : 23, city: "Chennai"}], {ordered: false})
+db.companyData.insertOne({ _id:5, name : "Iris", age : 23, city: "Chennai"},{ writeConcern: {w: 1, j: false, wtiemout: 200}})
+db.companyData.insertOne({ _id:5, name : "Iris", age : 23, city: "Chennai"},{ writeConcern: {w: 1, j: true, wtiemout: 200}})
+
+
+
+
+
+
+
+
+
+
+
+
+VALIDATION'S
+db.createCollection("posts", {
+    validator: {
+        $jsonSchema: {
+            bsonType: "object",
+            required: ["title", "text", "creator", "comments"],
+            properties: {
+                title: {
+                    bsonType: "string",
+                    description: "must be a string and required",
+                },
+                text: {
+                    bsonType: "string",
+                    description: "must be a string and required",
+                },
+                creator: {
+                    bsonType: "objectId",
+                    description: "must be a objectid and required",
+                },
+                comments: {
+                    bsonType: "array",
+                    description: "must be a array and required",
+                    items: {
+                        bsonType: "object",
+                        required: ["text", "author"],
+                        properties: {
+                            text: {
+                                bsonType: "string",
+                                description: "must be a string and required",
+                            },
+                            author: {
+                                bsonType: "objectId",
+                                description: "must be a objectid and required",
+                            },
+                        },
+                    },
+                },
+            },
+        },
+    },
+});
+
+
+
+
+
+
+
+
+
+
+
+MongoDb max 16mb'
