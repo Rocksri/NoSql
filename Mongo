@@ -20,6 +20,13 @@ db.users.updateMany({isStory: false}, { $unset: {isStory: "" }})        #remove 
 db.users.updateMany({}, { $rename: {age: "Age" }})          #RENAME THE FIELD
 db.users.updateOne({ name: 'Maria' }, { $set: {age: 29, hobbies: [{ title: 'Good', frequency: 3 }]}}, {upsert: true})           #upsert will add data even data not found
 db.users.updateMany({hobbies: { $elemMatch: {title: "Sports", frequency: {$gte: 2}}}}, {$set: {"hobbies.$.highFrequency": true }})
+db.users.updateMany({"hobbies.frequency": {$gt: 2}}, {$set: {"hobbies.$[el].Nely": true }}, {arrayFilters: [{"el.frequency": {$gt: 2}}]})
+db.users.updateMany({name: 'Maria'}, {$push: { hobbies: {$each: [{title: 'Hiking', frequency: 3}, {title: 'Football', frequency: 5} ]} }})
+db.users.updateMany({name: 'Maria'}, {$push: { hobbies: {title: 'Sports', frequency: 22} }})
+db.users.updateMany({name: 'Maria'}, {$push: { hobbies: {$each: [{title: 'Hiking', frequency: 3}, {title: 'Football', frequency: 5}], $sort: {frequency: -1}}}})
+db.users.updateOne({name: "Maria"}, {$pull: { hobbies: {title: "Hiking"} }})
+db.users.updateOne({name: "Maria"}, {$pop: { hobbies: {goodFrequency: true} }})
+db.users.updateOne({name: "Maria"}, {$addToSet: { hobbies: {title: "Hiking"} }})
 
 
 
@@ -76,21 +83,52 @@ db.check.insertMany([{ name : "Iris", age : 23, city: "Chennai", history : {dise
 { name : "Luffy", age : 23, city: "Chennai", history : {disease : ['Rubber', 'Cut']}}])
 db.hobbies.insertMany([{_id: 'check', name: 'check'}, {_id: 'y', name:'y'}], {ordered: false})   >> will insert data id ordered is false
 db.persons.insertOne({name: 'Sri', age: 22}, { writeConcern: {w: 1, j: false, wtiemout: 200}})
-
-
 db.companyData.insertMany([{ _id:1, name : "Iris", age : 23, city: "Chennai"},
 { _id:4, name : "Grap", age : 73, city: "Chennai"},
 { _id:5, name : "Luffy", age : 23, city: "Chennai"}], {ordered: false})
 db.companyData.insertOne({ _id:5, name : "Iris", age : 23, city: "Chennai"},{ writeConcern: {w: 1, j: false, wtiemout: 200}})
 db.companyData.insertOne({ _id:5, name : "Iris", age : 23, city: "Chennai"},{ writeConcern: {w: 1, j: true, wtiemout: 200}})
+db.users.updateMany({ "hobbies.frequency": {$gt: 2}}, { $set: {"hobbies.$[].goodFrequency": true} })
+
+
+INDEXES
+db.persons.getIndexes()
+db.persons.createIndex({email: 1}, {unique: true})
+    MongoServerError[DuplicateKey]: Index build failed: c8253ffe-4b2c-4a7a-82c1-4c420ccb778d: Collection contactData.persons ( b81e12bf-66d2-486f-bb3a-bc365180b3ef ) ::
+    caused by :: E11000 duplicate key error collection: contactData.persons index: email_1 dup key: { email: "abigail.clark@example.com" }
+db.persons.createIndex({"dob.age": 1},
+                       {partialFilterExpression: {gender: "male"}})
+db.persons.explain().find({"dob.age": {$gt: 60}})
+db.persons.explain().find({"dob.age": {$gt: 60}, gender: "male"})
+
+db.hobbies.createIndex({ ph: 1 }, { unique: true, partialFilterExpression: { ph: { $exists: true } } })
+db.hobbies.createIndex({createAt:}, {expireAfterSeconds: 10})
+-----25-11-25-----
+db.customers.explain("executionStats").find({name: "Max"})
+db.customers.explain("executionStats").find({name: "Max"}, {_id:0, name:1})
+db.customers.createIndex({age: 1, name:1})
+db.customers.explain().find({name: "Max", age: 30})         #here it choose the compound index as winning plan
+db.customers.explain("allPlansExecution").find({name: "Max", age: 30}
+db.products.find({$text: {$search: "\"awesone book\""}})
+db.products.find({$text: {$search: "red book"}})
+db.products.find({$text: {$search: "young"}})
+db.products.find({$text: {$search: "awesome t-shirt"}}, {score: {$meta: "textScore"}})
+db.products.find({$text: {$search: "awesome t-shirt"}}, {score: {$meta: "textScore"}}).sort({score: {$meta: "textScore"}})
+db.products.dropIndex("description_text")
+db.products.find({$text: {$search: "awesome -t-shirt"}})
 
 
 
 
 
 
-
-
+GEOSPATIAL'S
+db.places.insertOne({name: "home", location: {type: "Point", coordinates: [79.9565272, 12.7674868]}})
+db.places.createIndex({location: "2dsphere"})
+db.places.find({location: {$near : {$geometry: {type: "Point", coordinates: [79.9681642, 12.7620382]}, $maxDistance: 3000, $minDistance: 10}}})
+db.places.find({$geoWithin: {$geometry: {type: "Polygon", coordinates: [[]]}}})			#here [[%%]] %%= add the polygon p1,p2,p3,p1
+db.places.find({ location: { $geoWithin: { $geometry: { type: "Polygon", coordinates: [ [ [80.00, 12.75], [80.01, 12.75], [80.01, 12.76], [80.00, 12.75] ] ] } } } })
+db.places.find({location: {$geoWithin: {$centerSphere: [[79.978518, 12.769760], 3.5/6378.1]}}})
 
 
 
